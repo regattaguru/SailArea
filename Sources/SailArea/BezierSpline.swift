@@ -12,25 +12,17 @@ import SpriteKit
 
 class BezierSpline {
 
-	static func getCurveControlPoints(
-		knots: [CGPoint],
-		firstControlPoints: inout [CGPoint],
-		secondControlPoints: inout [CGPoint]
-	) {
+	static func getCurveControlPoints(knots: [CGPoint]) -> [(CGPoint,CGPoint)] {
 		let segCount = knots.count - 1
-		guard segCount > 0 else {
-			fatalError("At least two knot points required")
-		}
+		guard segCount > 0 else { fatalError("At least two knot points required") }
+
 		if segCount == 1 {
-			firstControlPoints = [CGPoint(
-				x: (2 * knots[0].x + knots[1].x) / 3,
-				y: (2 * knots[0].y + knots[1].y) / 3
-			)]
-			secondControlPoints = [CGPoint(
-				x: 2 * firstControlPoints[0].x - knots[0].x,
-				y: 2 * firstControlPoints[0].y - knots[0].y
-			)]
-			return
+			// Straight line
+			let cp1 = CGPoint(x: (2 * knots[0].x + knots[1].x) / 3,
+												y: (2 * knots[0].y + knots[1].y) / 3)
+			let cp2 = CGPoint(x: 2 * cp1.x - knots[0].x,
+												y: 2 * cp1.y - knots[0].y)
+			return [(cp1,cp2)]
 		}
 
 		var xside: [Double] = Array(repeating: 0.0, count: segCount)
@@ -53,23 +45,19 @@ class BezierSpline {
 		let xSet = getFirstControlPoints(xside)
 		let ySet = getFirstControlPoints(yside)
 
-		firstControlPoints = [CGPoint](repeating: CGPoint.zero, count: segCount)
-		secondControlPoints = [CGPoint](repeating: CGPoint.zero, count: segCount)
+		var controlPoints: [(CGPoint,CGPoint)] = .init(repeating: (.zero,.zero), count: segCount)
 		for i in 0..<segCount {
-			firstControlPoints[i] = CGPoint(x: xSet[i], y: ySet[i])
-			if i < segCount - 1 {
-				secondControlPoints[i] = CGPoint(
-					x: 2 * knots[i + 1].x - xSet[i + 1],
-					y: 2 * knots[i + 1].y - ySet[i + 1]
-				)
-			} else {
-				secondControlPoints[i] = CGPoint(
-					x: (knots[i + 1].x + xSet[i]) / 2,
-					y: (knots[i + 1].y + ySet[i]) / 2
-				)
+			controlPoints[i].0 = CGPoint(x: xSet[i], y: ySet[i])
+			controlPoints[i].1 = switch i {
+			case segCount - 1: // last segment
+				CGPoint(x: (knots[i + 1].x + xSet[i]) / 2,
+								y: (knots[i + 1].y + ySet[i]) / 2)
+			default:
+				CGPoint(x: 2.0 * knots[i + 1].x - xSet[i + 1],
+								y: 2.0 * knots[i + 1].y - ySet[i + 1])
 			}
 		}
-		
+		return controlPoints
 	}
 
 	private static func getFirstControlPoints(_ rhs: [Double]) -> [Double] {

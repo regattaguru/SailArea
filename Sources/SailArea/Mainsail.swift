@@ -1,3 +1,4 @@
+	//
 	//  Mainsail.swift
 	//
 	//
@@ -14,11 +15,12 @@ struct Mainsail: Sail {
 	enum GirthPoint {
 		case head,upper,threeQuarter,half,quarter
 	}
-
-		// p
+		// MARK: - Measurements
+		/// Luff length alias 'p'
 	var luff: Linear
-		// e
+		/// Foot length alias 'e'
 	var foot: Linear
+		/// Leech length - optional but should be required
 	var leech: Linear?
 		// Girths
 	var headWidth: Linear?
@@ -36,17 +38,14 @@ struct Mainsail: Sail {
 		return Area(value: area, unit: .squareMeters)
 	}
 
-	func trapezoidRuleArea() -> Double {
-			/// P / 8 (E+2·QW+2·HW+1.5·TW+UW+0.5·HB)
-		let p = luff.value
-		let e = foot.value
-		let hb = getVal(.head)
-		let uw = getVal(.upper)
-		let tw = getVal(.threeQuarter)
-		let hw = getVal(.half)
-		let qw = getVal(.quarter)
-		let area = p / 8 * (e + 2 * qw + 2 * hw + 1.5 * tw + uw + hb / 2 )
-		return area
+	var leechPoints: [CGPoint] {
+		let clew = CGPoint(x: foot.value, y: 0)
+		let head = CGPoint(x: getVal(.head), y: luff.value)
+		let mid = Self.midLeechPoint(head, clew, girth: getVal(.half))
+		let qtr = Self.midLeechPoint(mid, clew, girth: getVal(.quarter))
+		let thq = Self.midLeechPoint(head, mid, girth: getVal(.threeQuarter))
+		let upp = Self.midLeechPoint(head,thq, girth: getVal(.upper))
+		return [head,upp,thq,mid,qtr,clew]
 	}
 
 	enum MainType {
@@ -88,6 +87,19 @@ struct Mainsail: Sail {
 		}
 	}
 
+	func trapezoidRuleArea() -> Double {
+			/// P / 8 (E+2·QW+2·HW+1.5·TW+UW+0.5·HB)
+		let p = luff.value
+		let e = foot.value
+		let hb = getVal(.head)
+		let uw = getVal(.upper)
+		let tw = getVal(.threeQuarter)
+		let hw = getVal(.half)
+		let qw = getVal(.quarter)
+		let area = p / 8 * (e + 2 * qw + 2 * hw + 1.5 * tw + uw + 0.5 * hb )
+		return area
+	}
+
 	func getVal(_ point: GirthPoint) -> Double {
 		switch point {
 		case .head:
@@ -103,25 +115,9 @@ struct Mainsail: Sail {
 		}
 	}
 
-	var leechPoints: [CGPoint] {
-		let clew = CGPoint(x: foot.value, y: 0)
-		let head = CGPoint(x: getVal(.head), y: luff.value)
-		let mid = midGirthPoint(head, clew, girth: getVal(.half))
-		let qtr = midGirthPoint(mid, clew, girth: getVal(.quarter))
-		let thq = midGirthPoint(head, mid, girth: getVal(.threeQuarter))
-		let upp = midGirthPoint(head,thq, girth: getVal(.upper))
-		return [head,upp,thq,mid,qtr,clew]
-	}
-
 	func leechProfile() -> CGMutablePath? {
 		let pts = leechPoints
-		var cp1: [CGPoint] = []
-		var cp2: [CGPoint] = []
-		BezierSpline.getCurveControlPoints(
-			knots: pts,
-			firstControlPoints: &cp1,
-			secondControlPoints: &cp2
-		)
+		let cpArray = BezierSpline.getCurveControlPoints(knots: pts)
 
 		guard pts.count > 1 else { return nil }
 		var ptArray = pts
@@ -139,12 +135,11 @@ struct Mainsail: Sail {
 			// Current point is now aft head point - top of leech
 
 		for i in 0..<ptArray.endIndex {
-			path.addCurve(to: ptArray[i], control1: cp1[i], control2: cp2[i])
+			path.addCurve(to: ptArray[i], control1: cpArray[i].0, control2: cpArray[i].1)
 		}
-
 		for i in 0..<pts.endIndex {
 			path.move(to: pts[i])
-		path.addLine(to: CGPoint(x: 0, y: pts[i].y))
+			path.addLine(to: CGPoint(x: 0, y: pts[i].y))
 			path.closeSubpath()
 		}
 		return path
@@ -152,11 +147,3 @@ struct Mainsail: Sail {
 
 }
 
-func midGirthPoint(_ pt1: CGPoint, _ pt2: CGPoint, girth: CGFloat) -> CGPoint {
-	let (left,right) = pt1.x < pt2.x ? (pt1, pt2) : (pt2, pt1)
-	let run = (right.x - left.x)
-	let rslope = run == 0 ? 0 : 1 / ((left.y - right.y) / run)
-	let (midx,midy) = (left.x + (right.x - left.x)/2, left.y - ( left.y - right.y )/2)
-	let yOffset = midy - midx * rslope
-	return CGPoint(x: girth, y: girth * rslope + yOffset)
-}

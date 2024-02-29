@@ -8,6 +8,7 @@
 import Foundation
 import CoreText
 
+/// Helpers to make CoreText just a little more Swifty
 extension CTFont {
 		//Returns the scaled font-ascent metric of the given font.
 	var ascent: CGFloat { CTFontGetAscent(self) }

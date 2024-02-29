@@ -12,6 +12,10 @@ enum FrameAlign {
 	case leading,center,trailing
 }
 
+enum FrameVAlign {
+	case baseline,midX,xTop,top
+}
+
 extension CGContext {
 	func addFrame(_ frame: CTFrame) {
 		self.saveGState()
@@ -26,14 +30,12 @@ extension CTFramesetter {
 	}
 }
 
-func makeFrame(
-	str: String,
-	point: CGPoint,
-	align: FrameAlign = .leading
-) -> CTFrame {
+func makeFrame(str: String,
+							 point: CGPoint,
+							 align: FrameAlign = .leading) -> CTFrame {
 	let myString = NSMutableAttributedString(string: str)
 
-	var fontM = CTFont(.label, size: 0.2).xHeight
+	let fontM = CTFont(.label, size: 0.2).xHeight
 
 		// Create the attributes and add them to the string
 	myString.addAttribute(
@@ -47,7 +49,7 @@ func makeFrame(
 		range: NSRange(location: 0, length: myString.length)
 	)
 	var pt = point
-	pt.y -= myString.defaultSize.height + fontM / 2
+	pt.y -= myString.size().height + fontM / 2
 	switch align {
 	case .trailing: pt.x -= myString.defaultSize.width
 	case .center: pt.x -= myString.defaultSize.width / 2.0
