@@ -9,28 +9,26 @@ import Foundation
 import CoreGraphics
 
 struct Headsail: Sail {
-	typealias Linear = Measurement<UnitLength>
-	typealias Area = Measurement<UnitArea>
 
 	enum GirthPoint {
 		case head,upper,threeQuarter,half,quarter
 	}
 		// MARK: - Measurements
 		/// Luff length - from tack point to head point
-	var luff: Linear
+	var luff: Length
 		/// Length from head point to clew point - optional, but should be required.
-	var leech: Linear?
+	var leech: Length?
 		/// Foot length - from clew point to tack point
-	var foot: Linear
+	var foot: Length
 		/// Luff perpendicular
-	var luffPerp: Linear
+	var luffPerp: Length
 		/// Girths - all provided with fallback values
-	var headWidth: Linear?
-	var upperWidth: Linear?
-	var threeQuarterWidth: Linear?
-	var halfWidth: Linear?
-	var quarterWidth: Linear?
-	var footMedian: Linear?
+	var headWidth: Length?
+	var upperWidth: Length?
+	var threeQuarterWidth: Length?
+	var halfWidth: Length?
+	var quarterWidth: Length?
+	var footMedian: Length?
 		// MARK: -
 	var area: Area {
 		let area: Double = trapezoidRuleArea()

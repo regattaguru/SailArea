@@ -8,10 +8,17 @@
 
 import Foundation
 import CoreGraphics
-import SpriteKit
 
 class BezierSpline {
-
+	/// Creates intermediate control points to smoothly connect the points provided.
+	///
+	/// - Parameters:
+	/// 	- knots: An array of more than one points. An array of two points will return control points that define a straight line.
+	///
+	/// - Returns: An array of tuples containing the control points required. 
+	///
+	/// The array returned will be one element shorter than the array provided as the parameter. Each element of the returned array contains the two control points to insert between the corresponding knots.
+	///
 	static func getCurveControlPoints(knots: [CGPoint]) -> [(CGPoint,CGPoint)] {
 		let segCount = knots.count - 1
 		guard segCount > 0 else { fatalError("At least two knot points required") }
@@ -61,20 +68,20 @@ class BezierSpline {
 	}
 
 	private static func getFirstControlPoints(_ rhs: [Double]) -> [Double] {
-		let n = rhs.count
-		var x = [Double](repeating: 0.0, count: n)
-		var tmp = [Double](repeating: 0.0, count: n)
+		let segCount = rhs.count
+		var outArray = [Double](repeating: 0.0, count: segCount)
+		var tempArray = [Double](repeating: 0.0, count: segCount)
 		var b = 2.0
-		x[0] = rhs[0] / b
-		for i in 1..<n {
-			tmp[i] = 1 / b
-			b = (i < n - 1 ? 4.0 : 3.5) - tmp[i]
-			x[i] = (rhs[i] - x[i - 1]) / b
+		outArray[0] = rhs[0] / b
+		for i in 1..<segCount {
+			tempArray[i] = 1 / b
+			b = (i < segCount - 1 ? 4.0 : 3.5) - tempArray[i]
+			outArray[i] = (rhs[i] - outArray[i - 1]) / b
 		}
-		for i in stride(from: n - 1, to: 0, by: -1) {
-			x[i - 1] -= tmp[i] * x[i]
+		for i in stride(from: segCount - 1, to: 0, by: -1) {
+			outArray[i - 1] -= tempArray[i] * outArray[i]
 		}
-		return x
+		return outArray
 	}
 }
 

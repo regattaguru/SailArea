@@ -6,30 +6,28 @@
 	//
 
 import Foundation
-import CoreGraphics
+//import CoreGraphics
 
 struct Mainsail: Sail {
-	typealias Linear = Measurement<UnitLength>
-	typealias Area = Measurement<UnitArea>
 
 	enum GirthPoint {
 		case head,upper,threeQuarter,half,quarter
 	}
 		// MARK: - Measurements
 		/// Luff length alias 'p'
-	var luff: Linear
+	var luff: Length
 		/// Foot length alias 'e'
-	var foot: Linear
+	var foot: Length
 		/// Leech length - optional but should be required
-	var leech: Linear?
+	var leech: Length?
 		// Girths
-	var headWidth: Linear?
-	var upperWidth: Linear?
-	var threeQuarterWidth: Linear?
-	var halfWidth: Linear?
-	var quarterWidth: Linear?
-	var footMedian: Linear?
-	var luffPerp: Linear?
+	var headWidth: Length?
+	var upperWidth: Length?
+	var threeQuarterWidth: Length?
+	var halfWidth: Length?
+	var quarterWidth: Length?
+	var footMedian: Length?
+	var luffPerp: Length?
 
 	var mainType: MainType = .normal
 
@@ -113,36 +111,6 @@ struct Mainsail: Sail {
 		case .quarter:
 			return quarterWidth?.value ?? mainType.fallback(for: .quarter)
 		}
-	}
-
-	func leechProfile() -> CGMutablePath? {
-		let pts = leechPoints
-		let cpArray = BezierSpline.getCurveControlPoints(knots: pts)
-
-		guard pts.count > 1 else { return nil }
-		var ptArray = pts
-		let firstPoint = ptArray.removeFirst()
-
-		let path = CGMutablePath()
-			// From clew point...
-		path.move(to: pts.last!)
-			// ...to tack point...
-		path.addLine(to: CGPoint(x: 0, y: 0))
-			// ...to head point...
-		path.addLine(to: CGPoint(x: 0, y: pts.first!.y))
-			// ...to aft head point
-		path.addLine(to: firstPoint)
-			// Current point is now aft head point - top of leech
-
-		for i in 0..<ptArray.endIndex {
-			path.addCurve(to: ptArray[i], control1: cpArray[i].0, control2: cpArray[i].1)
-		}
-		for i in 0..<pts.endIndex {
-			path.move(to: pts[i])
-			path.addLine(to: CGPoint(x: 0, y: pts[i].y))
-			path.closeSubpath()
-		}
-		return path
 	}
 
 }

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 extension NSMutableAttributedString {
 	func defaultBBox() -> CGRect{
@@ -15,4 +16,5 @@ extension NSMutableAttributedString {
 		self.defaultBBox().size
 	}
 }
+
 

@@ -8,9 +8,37 @@
 import Foundation
 import CoreText
 
-@available(macOS 10.15, *)
 extension Mainsail {
-	@available(macOS 12.0, *)
+	func leechProfile() -> CGMutablePath? {
+		let pts = leechPoints
+		let cpArray = BezierSpline.getCurveControlPoints(knots: pts)
+
+		guard pts.count > 1 else { return nil }
+		var ptArray = pts
+		let firstPoint = ptArray.removeFirst()
+
+		let path = CGMutablePath()
+			// From clew point...
+		path.move(to: pts.last!)
+			// ...to tack point...
+		path.addLine(to: CGPoint(x: 0, y: 0))
+			// ...to head point...
+		path.addLine(to: CGPoint(x: 0, y: pts.first!.y))
+			// ...to aft head point
+		path.addLine(to: firstPoint)
+			// Current point is now aft head point - top of leech
+
+		for i in 0..<ptArray.endIndex {
+			path.addCurve(to: ptArray[i], control1: cpArray[i].0, control2: cpArray[i].1)
+		}
+		for i in 0..<pts.endIndex {
+			path.move(to: pts[i])
+			path.addLine(to: CGPoint(x: 0, y: pts[i].y))
+			path.closeSubpath()
+		}
+		return path
+	}
+
 	func pdfProfile(url: URL) {
 			// Letter: 612 by 792
 			// A4:     595 by 842
@@ -51,7 +79,7 @@ extension Mainsail {
 		}
 		context.addFrame(
 			makeFrame(
-				str: self.area.formatted(.measurement(width: .abbreviated, usage: .asProvided)),
+				str: measFormatter.string(from: self.area),
 				point: .init(x: -foot.value/2, y: luff.value/2)
 			)
 		)
